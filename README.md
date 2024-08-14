@@ -1,2 +1,2 @@
-# api_yamdb
-api_yamdb
+API для YANDB
+1) Пока ничего не делает

@@ -1,11 +1,11 @@
-# accounts/views.py
-
-from rest_framework import generics
+# В доработке!
+from rest_framework import generics, viewsets
 from api.serializers import RegisterSerializer
+from .models import CustomUser
+
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
 
-class TokenObtainPairView(generics.GenericAPIView):
-    # Здесь вы можете использовать стандартный класс или создать свой
-    pass  # Реализуйте получение токена по своему усмотрению
+class TokenView(generics.CreateAPIView):
+    pass

@@ -1,19 +1,20 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
 from reviews.models import Category, Genre, Title
-
-User = get_user_model()
+from reviews.models import CustomUser
+import re
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    # В этот класс нужно дописать валидацию на имя и фамилию - требуют тесты
     class Meta:
-        model = User
-        fields = ('email', 'username',)
+        model = CustomUser
+        fields = ('username', 'email', )
 
     def create(self, validated_data):
-        user = User(**validated_data)
+        user = CustomUser(**validated_data)
         user.save()
         return user
+
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -38,10 +39,12 @@ class CategorySerializer(serializers.ModelSerializer):
             )
         return value
 
+
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         fields = ['id', 'name', 'slug']
+
 
 class TitleSerializer(serializers.ModelSerializer):
     genre = GenreSerializer(many=True, read_only=True)

@@ -84,6 +84,10 @@ REST_FRAMEWORK = {
     )
 }
 
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+
+EMAIL_FILE_PATH = BASE_DIR / 'sent_emails'
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'

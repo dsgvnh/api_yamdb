@@ -1,18 +1,53 @@
 from rest_framework import serializers
 from reviews.models import Category, Genre, Title
 from reviews.models import CustomUser
+from django.contrib.auth.tokens import default_token_generator
 import re
+from django.core.validators import (RegexValidator, MaxLengthValidator,
+                                    MinLengthValidator)
+
+
+class TokenSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'confirmation_code', )
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    # В этот класс нужно дописать валидацию на имя и фамилию - требуют тесты
+    username_validator = RegexValidator(
+        regex=r'^[\w.@+-]+\Z',
+        message="Неверный формат Username",
+    )
+    username = serializers.CharField(validators=[username_validator,
+                                                 MinLengthValidator(3),
+                                                 MaxLengthValidator(150)],
+                                     required=True,
+                                     )
+    email = serializers.EmailField(max_length=150, required=True)
+
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', )
+        fields = ('username', 'email')
+
+    def validate(self, data):
+        username = data.get('username')
+        email = data.get('email')
+        if CustomUser.objects.filter(email=email, username=username).exists():
+            return data
+        elif (CustomUser.objects.filter(email=email).exists() and
+              CustomUser.objects.filter(username=username).exists()):
+            raise serializers.ValidationError('Имя и почта с такими значениями заняты')
+        elif CustomUser.objects.filter(email=email).exists():
+            raise serializers.ValidationError('Такая почта уже занята')
+        elif CustomUser.objects.filter(username=username):
+            raise serializers.ValidationError('Такое имя уже занято')
+        return data
 
     def create(self, validated_data):
-        user = CustomUser(**validated_data)
-        user.save()
+        email = validated_data.get('email')
+        username = validated_data.get('username')
+        user, created = CustomUser.objects.get_or_create(email=email,
+                                                         username=username)
         return user
 
 

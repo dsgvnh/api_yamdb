@@ -28,6 +28,7 @@ class CustomUser(AbstractUser):
     last_name = models.CharField(max_length=150)
     bio = models.TextField(max_length=250, blank=True)
     role = models.CharField(max_length=10, choices=ROLES, default='user')
+    confirmation_code = models.CharField(max_length=500, blank=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ('email', )

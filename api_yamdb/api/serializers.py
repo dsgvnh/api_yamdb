@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from reviews.models import Category, Genre, Title
-from reviews.models import CustomUser
+from reviews.models import Category, Genre, Title, CustomUser
 from django.contrib.auth.tokens import default_token_generator
 import re
 from django.core.validators import (RegexValidator, MaxLengthValidator,
@@ -11,6 +10,24 @@ class TokenSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('username', 'confirmation_code', )
+
+
+class UserSerializer(serializers.ModelSerializer):
+    username_validator = RegexValidator(
+        regex=r'^[\w.@+-]+\Z',
+        message="Неверный формат Username",
+    )
+    username = serializers.CharField(validators=[username_validator,
+                                                 MinLengthValidator(3),
+                                                 MaxLengthValidator(150)],
+                                     required=True,
+                                     )
+    email = serializers.EmailField(max_length=150, required=True)
+    
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'email', 'first_name',
+                  'last_name', 'bio', 'role')
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -34,8 +51,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         email = data.get('email')
         if CustomUser.objects.filter(email=email, username=username).exists():
             return data
-        elif (CustomUser.objects.filter(email=email).exists() and
-              CustomUser.objects.filter(username=username).exists()):
+        elif (CustomUser.objects.filter(email=email).exists()
+              and CustomUser.objects.filter(username=username).exists()):
             raise serializers.ValidationError('Имя и почта с такими значениями заняты')
         elif CustomUser.objects.filter(email=email).exists():
             raise serializers.ValidationError('Такая почта уже занята')

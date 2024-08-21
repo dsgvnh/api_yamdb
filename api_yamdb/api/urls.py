@@ -1,17 +1,18 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from .views import CategoryViewSet, GenreViewSet, TitleViewSet, UsersViewSet
-from reviews.views import RegisterView, TokenView
+from .views import (CategoryViewSet, GenreViewSet, TitleViewSet,
+                    UsersViewSet, RegisterView, TokenView)
 
-router = DefaultRouter()
-router.register(r'categories', CategoryViewSet)
-router.register(r'genres', GenreViewSet)
-router.register(r'titles', TitleViewSet)
-router.register(r'users', UsersViewSet)  # по тестам не проходит - надо переписывать
 
+router_v1 = DefaultRouter()
+
+router_v1.register(r'titles', TitleViewSet, basename='titles')
+router_v1.register(r'categories', CategoryViewSet, basename='categories')
+router_v1.register(r'genres', GenreViewSet, basename='genres')
+router_v1.register(r'users', UsersViewSet, basename='users')
 
 urlpatterns = [
     path('v1/auth/signup/', RegisterView.as_view()),
-    path('v1/auth/token/', TokenView.as_view()),  # Не работает
-    path('v1/', include(router.urls)),
+    path('v1/auth/token/', TokenView.as_view()),
+    path('v1/', include(router_v1.urls)),
 ]

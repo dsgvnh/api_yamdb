@@ -1,14 +1,17 @@
-from rest_framework import viewsets, status, views, permissions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
 from api.serializers import (RegisterSerializer, TokenSerializer,
                              UserSerializer, CategorySerializer,
                              GenreSerializer, TitleSerializer)
 from reviews.models import CustomUser, Category, Genre, Title
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
+from .permissions import IsAdmin
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -32,30 +35,27 @@ class TitleViewSet(viewsets.ModelViewSet):
 class UsersViewSet(viewsets.ModelViewSet):
     queryset = CustomUser.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAdminUser, )
+    permission_classes = (permissions.IsAuthenticated, IsAdmin)
     http_method_names = ['get', 'post', 'patch', 'delete']
     lookup_field = 'username'
-    #filter_backends = (SearchFilter, )
-    search_fields = ('username', )
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ('username', 'email', )
+    pagination_class = PageNumberPagination
 
-    def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-    @action(detail=False, methods=['get', 'patch', ],
-            permission_classes=[permissions.IsAuthenticated])
+    @action(detail=False,
+            methods=['GET', 'PATCH'],
+            permission_classes=[permissions.IsAuthenticated, ])
     def me(self, request):
-        if request.method == 'GET':
-            serializer = self.get_serializer(request.user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        elif request.method == 'PATCH':
-            serializer = self.get_serializer(
-                request.user, data=request.data, partial=True)
+        serializer = UserSerializer(request.user,
+                                    data=request.data,
+                                    partial=True)
+        if request.user.role == 'admin' or request.user.role == 'moderator':
             serializer.is_valid(raise_exception=True)
-            serializer.save(role=request.user.role, partial=True)
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(role='user')
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class RegisterView(views.APIView):

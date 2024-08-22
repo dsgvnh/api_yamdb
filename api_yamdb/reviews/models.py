@@ -14,20 +14,13 @@ class CustomUser(AbstractUser):
         regex=r'^[\w.@+-]+\Z',
         message="Неверный формат Username",
     )
-    username = models.CharField(max_length=150, unique=True, blank=False,
-                                validators=[
-                                    username_validator,
-                                    MinLengthValidator(3),
-                                    MaxLengthValidator(150)],
-                                error_messages={
-                                    'blank': 'Заполните поле Username',
-                                    'unique': 'Такой username уже существует'
-                                })
+    username = models.CharField(max_length=150, unique=True, blank=False)
     email = models.EmailField(max_length=254, unique=True, blank=False)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)
     bio = models.TextField(max_length=250, blank=True)
     role = models.CharField(max_length=10, choices=ROLES, default='user')
+    confirmation_code = models.CharField(max_length=500, blank=True)
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ('email', )

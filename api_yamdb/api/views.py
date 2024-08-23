@@ -2,7 +2,7 @@ from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
 from api.serializers import (RegisterSerializer,
                              UserSerializer, CategorySerializer,
-                             GenreSerializer)
+                             GenreSerializer, TokenSerializer)
 from reviews.models import CustomUser, Category, Genre, Title
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
@@ -121,8 +121,10 @@ class TokenView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwagrs):
-        username = request.data.get('username')
-        confirmation_code = request.data.get('confirmation_code')
+        serializer = TokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data.get('username')
+        confirmation_code = serializer.validated_data.get('confirmation_code')
         user = get_object_or_404(CustomUser, username=username)
         if default_token_generator.check_token(user, confirmation_code):
             token = AccessToken.for_user(user)

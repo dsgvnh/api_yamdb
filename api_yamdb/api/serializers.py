@@ -5,10 +5,18 @@ from django.core.validators import (RegexValidator, MaxLengthValidator,
                                     MinLengthValidator)
 
 
-class TokenSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'confirmation_code', )
+class TokenSerializer(serializers.Serializer):
+    username = serializers.CharField(
+        max_length=150,
+        validators=[
+            RegexValidator(
+                regex=r'^[\w.@+-]+\Z',
+                message='Username должен содержать только буквы, цифры и символы: @ . + -',
+                code='invalid_username'
+            )
+        ],
+        required=True,)
+    confirmation_code = serializers.CharField(required=True)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -52,7 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
         return data
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class RegisterSerializer(serializers.Serializer):
     username_validator = RegexValidator(
         regex=r'^[\w.@+-]+\Z',
         message="Неверный формат Username",
@@ -62,11 +70,7 @@ class RegisterSerializer(serializers.ModelSerializer):
                                                  MaxLengthValidator(150)],
                                      required=True,
                                      )
-    email = serializers.EmailField(max_length=150, required=True)
-
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'email')
+    email = serializers.EmailField(max_length=254, required=True)
 
     def validate(self, data):
         username = data.get('username')
@@ -75,11 +79,12 @@ class RegisterSerializer(serializers.ModelSerializer):
             return data
         elif (CustomUser.objects.filter(email=email).exists()
               and CustomUser.objects.filter(username=username).exists()):
-            raise serializers.ValidationError('Имя и почта с такими значениями заняты')
+            raise serializers.ValidationError({'email': 'Такая почта уже занята',
+                                              'username': 'Такое имя уже занято'})
         elif CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError('Такая почта уже занята')
+            raise serializers.ValidationError({'email': 'Такая почта уже занята'})
         elif CustomUser.objects.filter(username=username):
-            raise serializers.ValidationError('Такое имя уже занято')
+            raise serializers.ValidationError({'username': 'Такое имя уже занято'})
         return data
 
     def create(self, validated_data):

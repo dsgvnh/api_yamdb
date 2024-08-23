@@ -7,12 +7,6 @@ from django.core.validators import (RegexValidator, MaxLengthValidator,
                                     MinLengthValidator)
 
 
-class TokenSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = CustomUser
-        fields = ('username', 'confirmation_code', )
-
-
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
         max_length=150,
@@ -22,11 +16,13 @@ class UserSerializer(serializers.ModelSerializer):
                 message='Username должен содержать только буквы, цифры и символы: @ . + -',
                 code='invalid_username'
             )
-        ]
+        ],
+        required=True,
     )
     email = serializers.EmailField(
         max_length=254,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
+        validators=[UniqueValidator(queryset=CustomUser.objects.all())],
+        required=True,
     )
     first_name = serializers.CharField(
         max_length=150,

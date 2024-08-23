@@ -14,7 +14,7 @@ class CustomUser(AbstractUser):
         regex=r'^[\w.@+-]+\Z',
         message="Неверный формат Username",
     )
-    username = models.CharField(max_length=150, unique=True, blank=False)
+    username = models.CharField(max_length=150, unique=True, blank=False,)
     email = models.EmailField(max_length=254, unique=True, blank=False)
     first_name = models.CharField(max_length=150)
     last_name = models.CharField(max_length=150)

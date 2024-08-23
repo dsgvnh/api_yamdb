@@ -1,7 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
-from api.serializers import (RegisterSerializer, TokenSerializer,
+from api.serializers import (RegisterSerializer,
                              UserSerializer, CategorySerializer,
                              GenreSerializer, TitleSerializer)
 from reviews.models import CustomUser, Category, Genre, Title
@@ -81,10 +81,8 @@ class TokenView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwagrs):
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get('username')
-        confirmation_code = serializer.validated_data.get('confirmation_code')
+        username = request.data.get('username')
+        confirmation_code = request.data.get('confirmation_code')
         user = get_object_or_404(CustomUser, username=username)
         if default_token_generator.check_token(user, confirmation_code):
             token = AccessToken.for_user(user)

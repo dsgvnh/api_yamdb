@@ -1,6 +1,6 @@
 from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
-from api.serializers import (RegisterSerializer, TokenSerializer,
+from api.serializers import (RegisterSerializer,
                              UserSerializer, CategorySerializer,
                              GenreSerializer)
 from reviews.models import CustomUser, Category, Genre, Title
@@ -10,36 +10,53 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from .permissions import IsAdmin
-from rest_framework import viewsets
 from django_filters.rest_framework import DjangoFilterBackend
-from .permissions import IsAdminOrReadOnly
 from .serializers import TitleGetSerializer, TitlePostSerializer
-from .filters import WriteFilter
-from rest_framework import viewsets
-from reviews.models import Title
-from rest_framework import permissions
+from .permissions import IsAdmin, IsReadOnly, IsAdminOrReadOnly, IsReadOnly
+from api.filters import WriteFilter
+
+
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Title.objects.all().order_by('id')
     serializer_class = CategorySerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    lookup_field = 'slug'
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsReadOnly()]
+        return [IsAdminOrReadOnly()]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Title.objects.all().order_by('id')
     serializer_class = GenreSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    lookup_field = 'slug'
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsReadOnly()]
+        return [IsAdminOrReadOnly()]
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
-    permission_classes = (IsAdminOrReadOnly,)
-    filter_backends = (DjangoFilterBackend,)
-    filter_class = WriteFilter
+    queryset = Title.objects.all().order_by('id')
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = WriteFilter
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [IsReadOnly()]
+        return [IsAdminOrReadOnly()]
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action in ['list', 'retrieve']:
             return TitleGetSerializer
         return TitlePostSerializer
 
@@ -48,10 +65,11 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(isinstance, data=request.data, partial=True)
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -103,10 +121,8 @@ class TokenView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
     def post(self, request, *args, **kwagrs):
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get('username')
-        confirmation_code = serializer.validated_data.get('confirmation_code')
+        username = request.data.get('username')
+        confirmation_code = request.data.get('confirmation_code')
         user = get_object_or_404(CustomUser, username=username)
         if default_token_generator.check_token(user, confirmation_code):
             token = AccessToken.for_user(user)

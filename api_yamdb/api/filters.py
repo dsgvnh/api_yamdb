@@ -3,10 +3,11 @@ from reviews.models import Title
 
 
 class WriteFilter(django_filters.FilterSet):
-    category = django_filters.CharFilter(field_name='category__slug', lookup_expr='icontains')
-    genre = django_filters.CharFilter(field_name='genre__slug', lookup_expr='icontains')
-    year = django_filters.NumberFilter(field_name='year')
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains')
+    genre = django_filters.CharFilter(field_name='genre__slug', lookup_expr='exact')
+    category = django_filters.CharFilter(field_name='category__slug', lookup_expr='exact')
+    year = django_filters.NumberFilter(field_name='year', lookup_expr='exact')
 
     class Meta:
         model = Title
-        fields = ['category', 'genre', 'year']
+        fields = ['name', 'genre', 'category', 'year']

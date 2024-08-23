@@ -1,8 +1,6 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 from reviews.models import Category, Genre, Title, CustomUser
-from django.contrib.auth.tokens import default_token_generator
-import re
 from django.core.validators import (RegexValidator, MaxLengthValidator,
                                     MinLengthValidator)
 
@@ -102,32 +100,19 @@ class CategorySerializer(serializers.ModelSerializer):
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ['id', 'name', 'slug']
+        fields = ['name', 'slug']
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(max_length=256, required=True)
-    category = serializers.SlugRelatedField(
-        slug_field='slug',
-        queryset=Category.objects.all(),
-        many=True,
-        required=True
-    )
-    genre = serializers.SlugRelatedField(
-        slug_field='slug',
-        queryset=Genre.objects.all(),
-        many=True,
-        required=True
-    )
+    category = serializers.SlugRelatedField(slug_field='slug', queryset=Category.objects.all())
+    genre = serializers.SlugRelatedField(slug_field='slug', queryset=Genre.objects.all(), many=True)
 
     class Meta:
         model = Title
         fields = '__all__'
 
     def to_representation(self, instance):
-        serializer = TitleGetSerializer(instance)
-        return serializer.data
-
+        return TitleGetSerializer(instance).data
 
 class TitleGetSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)

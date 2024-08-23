@@ -95,25 +95,8 @@ class RegisterSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug']
+        fields = ['name', 'slug']
 
-    def validate_name(self, value):
-        if len(value) > 256:
-            raise serializers.ValidationError(
-                "Название не должно быть длиннее 256 символов."
-            )
-        return value
-
-    def validate_slug(self, value):
-        if len(value) > 50:
-            raise serializers.ValidationError(
-                "Slug не должен быть длиннее 50 символов."
-            )
-        if not re.match(r'^[-a-zA-Z0-9_]+$', value):
-            raise serializers.ValidationError(
-                "Slug содержит недопустимые символы."
-            )
-        return value
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -122,10 +105,34 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug']
 
 
-class TitleSerializer(serializers.ModelSerializer):
-    genre = GenreSerializer(many=True, read_only=True)
-    category = CategorySerializer(read_only=True)
+class TitlePostSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(max_length=256, required=True)
+    category = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Category.objects.all(),
+        many=True,
+        required=True
+    )
+    genre = serializers.SlugRelatedField(
+        slug_field='slug',
+        queryset=Genre.objects.all(),
+        many=True,
+        required=True
+    )
 
     class Meta:
         model = Title
-        fields = ['id', 'name', 'year', 'genre', 'category']
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        serializer = TitleGetSerializer(instance)
+        return serializer.data
+
+
+class TitleGetSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    genre = GenreSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Title
+        fields = '__all__'

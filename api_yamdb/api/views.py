@@ -1,9 +1,8 @@
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
 from api.serializers import (RegisterSerializer, TokenSerializer,
                              UserSerializer, CategorySerializer,
-                             GenreSerializer, TitleSerializer)
+                             GenreSerializer)
 from reviews.models import CustomUser, Category, Genre, Title
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
@@ -12,7 +11,14 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from .permissions import IsAdmin
-
+from rest_framework import viewsets
+from django_filters.rest_framework import DjangoFilterBackend
+from .permissions import IsAdminOrReadOnly
+from .serializers import TitleGetSerializer, TitlePostSerializer
+from .filters import WriteFilter
+from rest_framework import viewsets
+from reviews.models import Title
+from rest_framework import permissions
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -28,8 +34,24 @@ class GenreViewSet(viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    serializer_class = TitleSerializer
-    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAdminOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filter_class = WriteFilter
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return TitleGetSerializer
+        return TitlePostSerializer
+
+    def update(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(isinstance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class UsersViewSet(viewsets.ModelViewSet):

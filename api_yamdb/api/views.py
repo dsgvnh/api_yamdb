@@ -107,6 +107,8 @@ class RegisterView(views.APIView):
         serializer.save()
         user = CustomUser.objects.get(username=serializer.validated_data['username'])
         confirmation_code = default_token_generator.make_token(user)
+        user.confirmation_code = confirmation_code
+        user.save()
         send_mail(
             subject='Успешное создание кода',
             message=f'Код создан, ваш код - {confirmation_code}',

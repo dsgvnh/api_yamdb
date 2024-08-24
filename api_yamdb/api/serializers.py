@@ -35,10 +35,10 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=CustomUser.objects.all())]
     )
     first_name = serializers.CharField(
-        max_length=150,
+        max_length=150, required=False
     )
     last_name = serializers.CharField(
-        max_length=150,
+        max_length=150, required=False
     )
 
     class Meta:

@@ -44,6 +44,7 @@ class Genre(models.Model):
     def __str__(self):
         return self.name
 
+
 class Title(models.Model):
     name = models.CharField(max_length=256)
     year = models.IntegerField()
@@ -53,3 +54,24 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Review(models.Model):
+    text = models.TextField()
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, related_name='reviews')
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='reviews')
+    score = models.IntegerField()
+    pub_date = models.DateTimeField(
+        'Дата добавления', auto_now_add=True, db_index=True)
+
+
+class Comment(models.Model):
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='comments')
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    pub_date = models.DateTimeField(
+        'Дата добавления', auto_now_add=True, db_index=True)

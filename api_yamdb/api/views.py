@@ -2,8 +2,9 @@ from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
 from api.serializers import (RegisterSerializer,
                              UserSerializer, CategorySerializer,
-                             GenreSerializer, TokenSerializer)
-from reviews.models import CustomUser, Category, Genre, Title
+                             GenreSerializer, TokenSerializer,
+                             CommentSerializers, ReviewSerializer)
+from reviews.models import CustomUser, Category, Genre, Title, Comment, Review
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
@@ -12,7 +13,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import TitleGetSerializer, TitlePostSerializer
-from .permissions import IsAdmin, IsReadOnly, IsAdminOrReadOnly, IsReadOnly
+from .permissions import IsAdmin, IsReadOnly, IsAdminOrReadOnly, IsReadOnly, IsAuthorOrReadOnly
 from api.filters import WriteFilter
 
 
@@ -31,6 +32,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().order_by('id')
     serializer_class = GenreSerializer
@@ -44,6 +46,7 @@ class GenreViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all().order_by('id')
@@ -69,7 +72,6 @@ class TitleViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
-
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -134,3 +136,21 @@ class TokenView(views.APIView):
             return Response(message, status=status.HTTP_200_OK)
         else:
             return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
+        
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = (IsAuthorOrReadOnly,)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializers
+    permission_classes = (IsAuthorOrReadOnly,)
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)

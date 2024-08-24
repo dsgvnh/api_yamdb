@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from reviews.models import Category, Genre, Title, CustomUser
+from reviews.models import (Category, Genre, Title, CustomUser,
+                            Review, Comment)
 from django.core.validators import (RegexValidator, MaxLengthValidator,
                                     MinLengthValidator)
 
@@ -119,10 +120,33 @@ class TitlePostSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return TitleGetSerializer(instance).data
 
+
 class TitleGetSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Title
+        fields = '__all__'
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+    )
+
+    class Meta:
+        model = Review
+        fields = '__all__'
+
+
+class CommentSerializers(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',
+        read_only=True,
+    )
+
+    class Meta:
+        model = Comment
         fields = '__all__'

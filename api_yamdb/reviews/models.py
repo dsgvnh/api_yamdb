@@ -1,6 +1,5 @@
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
-from django.core.validators import (RegexValidator, MaxLengthValidator,
-                                    MinLengthValidator)
+from django.core.validators import (RegexValidator, MaxLengthValidator,)
 from django.db import models
 
 
@@ -49,7 +48,8 @@ class Title(models.Model):
     year = models.IntegerField()
     description = models.TextField()
     genre = models.ManyToManyField(Genre)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='titles')
+    rating = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.name

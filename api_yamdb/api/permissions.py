@@ -1,5 +1,4 @@
 from rest_framework.permissions import SAFE_METHODS, BasePermission
-from rest_framework import permissions
 
 
 class IsAdmin(BasePermission):
@@ -10,7 +9,6 @@ class IsAdmin(BasePermission):
                 or request.user.role == 'admin'
             )
         return False
-
 
 
 class IsAdminOrReadOnly(BasePermission):
@@ -31,17 +29,17 @@ class IsModerator(BasePermission):
     Проверяет, является ли пользователь модератором.
     """
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role == 'moderator'
+        return (request.user.is_authenticated
+                and request.user.role == 'moderator')
 
 
 class IsAuthorOrReadOnly(BasePermission):
-    """
-    Разрешает редактировать и удалять контент только автору, модератору или администратору.
-    """
     def has_object_permission(self, request, view, obj):
         if request.method in SAFE_METHODS:
             return True
-        return obj.author == request.user or request.user.is_moderator or request.user.is_admin
+        return obj.author == request.user or (
+            request.user.role in ['moderator', 'admin']
+        )
 
 
 class IsReadOnly(BasePermission):
@@ -50,3 +48,11 @@ class IsReadOnly(BasePermission):
     """
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS
+
+
+class IsAuthenticatedOrReadOnly(BasePermission):
+    """
+    Разрешает доступ только аутентифицированным пользователям.
+    """
+    def has_permission(self, request, view):
+        return request.method in SAFE_METHODS or request.user.is_authenticated

@@ -12,7 +12,6 @@ class IsAdmin(BasePermission):
         return False
 
 
-
 class IsAdminOrReadOnly(BasePermission):
     """
     Разрешает действия только для администратора.
@@ -34,19 +33,28 @@ class IsModerator(BasePermission):
         return request.user.is_authenticated and request.user.role == 'moderator'
 
 
-class IsAuthorOrReadOnly(BasePermission):
-    """
-    Разрешает редактировать и удалять контент только автору, модератору или администратору.
-    """
-    def has_object_permission(self, request, view, obj):
-        if request.method in SAFE_METHODS:
-            return True
-        return obj.author == request.user or request.user.is_moderator or request.user.is_admin
-
-
 class IsReadOnly(BasePermission):
     """
     Доступ разрешен для безопасных методов (GET, HEAD, OPTIONS).
     """
     def has_permission(self, request, view):
         return request.method in SAFE_METHODS
+
+
+class AdminModeratorAuthor(permissions.BasePermission):
+    """
+    Разрешает редактировать и удалять контент только автору, модератору или администратору.
+    """
+    def has_permission(self, request, view):
+        return (
+            request.method in SAFE_METHODS
+            or request.user.is_authenticated
+        )
+
+    def has_object_permission(self, request, view, obj):
+        return (
+            request.method in SAFE_METHODS
+            or obj.author == request.user
+            or request.user.role == 'moderator'
+            or request.user.role == 'admin'
+        )

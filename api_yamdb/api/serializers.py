@@ -1,9 +1,16 @@
-from rest_framework import serializers, validators
+# Standard library imports
+from django.core.validators import (
+    RegexValidator, MaxLengthValidator, MinLengthValidator
+)
+
+# Third-party imports
+from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
-from reviews.models import (Category, Genre, Title, CustomUser,
-                            Review, Comment)
-from django.core.validators import (RegexValidator, MaxLengthValidator,
-                                    MinLengthValidator)
+
+# Local application imports
+from reviews.models import (
+    Category, Genre, Title, CustomUser, Review, Comment
+)
 
 
 class TokenSerializer(serializers.Serializer):
@@ -12,11 +19,15 @@ class TokenSerializer(serializers.Serializer):
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',
-                message='Username должен содержать только буквы, цифры и символы: @ . + -',
+                message=(
+                    'Username должен содержать только буквы, '
+                    'цифры и символы: @ . + -'
+                ),
                 code='invalid_username'
             )
         ],
-        required=True,)
+        required=True,
+    )
     confirmation_code = serializers.CharField(required=True)
 
 
@@ -26,7 +37,10 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',  # Паттерн для проверки username
-                message='Username должен содержать только буквы, цифры и символы: @ . + -',
+                message=(
+                    'Username должен содержать только буквы, '
+                    'цифры и символы: @ . + -'
+                ),
                 code='invalid_username'
             )
         ]
@@ -36,10 +50,12 @@ class UserSerializer(serializers.ModelSerializer):
         validators=[UniqueValidator(queryset=CustomUser.objects.all())]
     )
     first_name = serializers.CharField(
-        max_length=150, required=False
+        max_length=150,
+        required=False
     )
     last_name = serializers.CharField(
-        max_length=150, required=False
+        max_length=150,
+        required=False
     )
 
     class Meta:
@@ -76,16 +92,25 @@ class RegisterSerializer(serializers.Serializer):
     def validate(self, data):
         username = data.get('username')
         email = data.get('email')
+
         if CustomUser.objects.filter(email=email, username=username).exists():
             return data
-        elif (CustomUser.objects.filter(email=email).exists()
-              and CustomUser.objects.filter(username=username).exists()):
-            raise serializers.ValidationError({'email': 'Такая почта уже занята',
-                                              'username': 'Такое имя уже занято'})
-        elif CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError({'email': 'Такая почта уже занята'})
-        elif CustomUser.objects.filter(username=username):
-            raise serializers.ValidationError({'username': 'Такое имя уже занято'})
+
+        if (CustomUser.objects.filter(email=email).exists() and
+                CustomUser.objects.filter(username=username).exists()):
+            raise serializers.ValidationError({
+                'email': 'Такая почта уже занята',
+                'username': 'Такое имя уже занято'
+            })
+
+        if CustomUser.objects.filter(email=email).exists():
+            raise serializers.ValidationError(
+                {'email': 'Такая почта уже занята'})
+
+        if CustomUser.objects.filter(username=username).exists():
+            raise serializers.ValidationError(
+                {'username': 'Такое имя уже занято'})
+
         return data
 
     def create(self, validated_data):
@@ -109,8 +134,10 @@ class GenreSerializer(serializers.ModelSerializer):
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
-    category = serializers.SlugRelatedField(slug_field='slug', queryset=Category.objects.all())
-    genre = serializers.SlugRelatedField(slug_field='slug', queryset=Genre.objects.all(), many=True)
+    category = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Category.objects.all())
+    genre = serializers.SlugRelatedField(
+        slug_field='slug', queryset=Genre.objects.all(), many=True)
 
     class Meta:
         model = Title
@@ -121,6 +148,7 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
+    rating = serializers.FloatField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
 

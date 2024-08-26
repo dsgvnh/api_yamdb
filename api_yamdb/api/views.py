@@ -1,21 +1,30 @@
-from rest_framework import viewsets, status, views, permissions, filters
-from rest_framework.response import Response
-from api.serializers import (RegisterSerializer,
-                             UserSerializer, CategorySerializer,
-                             GenreSerializer, TokenSerializer,
-                             CommentSerializer, ReviewSerializer)
-from reviews.models import CustomUser, Title, Comment, Review
-from rest_framework_simplejwt.tokens import AccessToken
+# Standard library imports
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.db.models import Avg
 from django.shortcuts import get_object_or_404
+
+# Third-party imports
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
-from django_filters.rest_framework import DjangoFilterBackend
-from .serializers import TitleGetSerializer, TitlePostSerializer
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import AccessToken
 
-from .permissions import IsAdmin, IsAdminOrReadOnly, IsReadOnly, AdminModeratorAuthor
+# Local application imports
+from reviews.models import CustomUser, Title, Comment, Review, Category, Genre
+from api.serializers import (RegisterSerializer,
+                             UserSerializer,
+                             CategorySerializer,
+                             GenreSerializer,
+                             TokenSerializer,
+                             CommentSerializer,
+                             ReviewSerializer)
+from .serializers import TitleGetSerializer, TitlePostSerializer
+from .permissions import (IsAdmin,
+                          IsAdminOrReadOnly,
+                          IsReadOnly,
+                          AdminModeratorAuthor)
 from .filters import WriteFilter
 
 
@@ -70,7 +79,6 @@ class GenreViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
     def perform_destroy(self, instance):
         instance.delete()
@@ -203,4 +211,3 @@ class CommentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return get_object_or_404(
             Review, pk=self.kwargs.get('review_id')).comments.all()
-

@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser, PermissionsMixin
-from django.core.validators import (RegexValidator, MaxLengthValidator,)
+from django.core.validators import (RegexValidator, MaxValueValidator,
+                                    MinValueValidator)
 from django.db import models
 
 
@@ -36,12 +37,14 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class Genre(models.Model):
     name = models.CharField(max_length=256)
     slug = models.SlugField(max_length=50, unique=True)
 
     def __str__(self):
         return self.name
+
 
 class Title(models.Model):
     name = models.CharField(max_length=256)
@@ -53,3 +56,33 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class Review(models.Model):
+    text = models.TextField()
+    title = models.ForeignKey(
+        Title, on_delete=models.CASCADE, related_name='reviews')
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='reviews')
+    score = models.PositiveIntegerField(
+        validators=[MinValueValidator(0), MaxValueValidator(10)])
+    pub_date = models.DateTimeField(
+        'Дата добавления', auto_now_add=True, db_index=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['author', 'title'],
+                name='unique_author_title'
+            )
+        ]
+
+
+class Comment(models.Model):
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name='comments')
+    review = models.ForeignKey(
+        Review, on_delete=models.CASCADE, related_name='comments')
+    text = models.TextField()
+    pub_date = models.DateTimeField(
+        'Дата добавления', auto_now_add=True, db_index=True)

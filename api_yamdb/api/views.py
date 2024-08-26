@@ -2,17 +2,20 @@ from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.response import Response
 from api.serializers import (RegisterSerializer,
                              UserSerializer, CategorySerializer,
-                             GenreSerializer, TokenSerializer)
-from reviews.models import CustomUser, Category, Genre, Title
+                             GenreSerializer, TokenSerializer,
+                             CommentSerializer, ReviewSerializer)
+from reviews.models import CustomUser, Title, Comment, Review
 from rest_framework_simplejwt.tokens import AccessToken
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import TitleGetSerializer, TitlePostSerializer
-from .permissions import IsAdmin, IsAdminOrReadOnly, IsReadOnly
+
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsReadOnly, AdminModeratorAuthor
 from .filters import WriteFilter
 
 
@@ -67,6 +70,7 @@ class GenreViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
 
     def perform_destroy(self, instance):
         instance.delete()
@@ -165,3 +169,38 @@ class TokenView(views.APIView):
             return Response(message, status=status.HTTP_200_OK)
         else:
             return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
+          
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    queryset = Review.objects.all()
+    serializer_class = ReviewSerializer
+    permission_classes = (AdminModeratorAuthor,)
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            title=get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        )
+
+    def get_queryset(self):
+        return get_object_or_404(Title,
+                                 pk=self.kwargs.get('title_id')).reviews.all()
+
+
+class CommentViewSet(viewsets.ModelViewSet):
+    http_method_names = ['get', 'post', 'patch', 'delete']
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = (AdminModeratorAuthor,)
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+            review=get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        )
+
+    def get_queryset(self):
+        return get_object_or_404(
+            Review, pk=self.kwargs.get('review_id')).comments.all()
+

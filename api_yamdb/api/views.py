@@ -14,15 +14,28 @@ from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from django_filters.rest_framework import DjangoFilterBackend
 from .serializers import TitleGetSerializer, TitlePostSerializer
-from .permissions import IsAdmin, IsReadOnly, IsAdminOrReadOnly, IsReadOnly, AdminModeratorAuthor
-from api.filters import WriteFilter
 
+from .permissions import IsAdmin, IsAdminOrReadOnly, IsReadOnly, AdminModeratorAuthor
+from .filters import WriteFilter
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().order_by('id')
+    queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
+    permission_classes = [IsAdminOrReadOnly]
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def filter_queryset(self, queryset):
+        queryset = super().filter_queryset(queryset)
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search)
+        return queryset
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsReadOnly()]
@@ -35,18 +48,35 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().order_by('id')
+    queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
+    permission_classes = [IsAdminOrReadOnly]
+    http_method_names = ['get', 'post', 'delete', 'head', 'options']
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(name__icontains=search).distinct()
+        return queryset
+
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [IsReadOnly()]
-        return [IsAdminOrReadOnly()]
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAdminOrReadOnly()]
+        return super(GenreViewSet, self).get_permissions()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+    def perform_destroy(self, instance):
+        instance.delete()
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class TitleViewSet(viewsets.ModelViewSet):
@@ -69,7 +99,8 @@ class TitleViewSet(viewsets.ModelViewSet):
 
     def partial_update(self, request, *args, **kwargs):
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
@@ -108,7 +139,8 @@ class RegisterView(views.APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        user = CustomUser.objects.get(username=serializer.validated_data['username'])
+        user = CustomUser.objects.get(
+            username=serializer.validated_data['username'])
         confirmation_code = default_token_generator.make_token(user)
         user.confirmation_code = confirmation_code
         user.save()
@@ -137,7 +169,7 @@ class TokenView(views.APIView):
             return Response(message, status=status.HTTP_200_OK)
         else:
             return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
-
+          
 
 class ReviewViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']

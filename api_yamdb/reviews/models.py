@@ -51,7 +51,8 @@ class Title(models.Model):
     year = models.IntegerField()
     description = models.TextField()
     genre = models.ManyToManyField(Genre)
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='titles')
+    rating = models.FloatField(null=True, blank=True)
 
     def __str__(self):
         return self.name

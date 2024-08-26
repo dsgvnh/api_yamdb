@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-AUTH_USER_MODEL = 'reviews.CustomUser'  # Заглушка - модель пользователя
+AUTH_USER_MODEL = 'reviews.CustomUser'
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -88,7 +88,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 5,
-    
+
 }
 
 EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'

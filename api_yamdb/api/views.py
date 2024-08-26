@@ -177,7 +177,7 @@ class TokenView(views.APIView):
             return Response(message, status=status.HTTP_200_OK)
         else:
             return Response(request.data, status=status.HTTP_400_BAD_REQUEST)
-          
+
 
 class ReviewViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']

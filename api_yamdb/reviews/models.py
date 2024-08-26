@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     RegexValidator, MaxValueValidator, MinValueValidator
 )
@@ -7,7 +7,7 @@ from django.db.models import Avg
 
 
 class CustomUser(AbstractUser):
-    ROLES = [  # Роли указаны в верхнем и нижнем регистре
+    ROLES = [
         ('user', 'User'),
         ('moderator', 'Moderator'),
         ('admin', 'Admin'),

@@ -96,8 +96,8 @@ class RegisterSerializer(serializers.Serializer):
         if CustomUser.objects.filter(email=email, username=username).exists():
             return data
 
-        if (CustomUser.objects.filter(email=email).exists() and
-                CustomUser.objects.filter(username=username).exists()):
+        if (CustomUser.objects.filter(email=email).exists()
+                and CustomUser.objects.filter(username=username).exists()):
             raise serializers.ValidationError({
                 'email': 'Такая почта уже занята',
                 'username': 'Такое имя уже занято'

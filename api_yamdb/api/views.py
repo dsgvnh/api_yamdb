@@ -1,9 +1,12 @@
-# Standard library imports
+# Django
+from django.conf import settings
+
+# Standard library
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 
-# Third-party imports
+# Third-party
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, views, permissions, filters
 from rest_framework.decorators import action
@@ -11,7 +14,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
 
-# Local application imports
+# Local
 from reviews.models import CustomUser, Title, Comment, Review, Category, Genre
 from api.serializers import (RegisterSerializer,
                              UserSerializer,
@@ -22,58 +25,24 @@ from api.serializers import (RegisterSerializer,
                              ReviewSerializer)
 from .serializers import TitleGetSerializer, TitlePostSerializer
 from .permissions import (IsAdmin,
-                          IsAdminOrReadOnly,
                           IsReadOnly,
                           AdminModeratorAuthor)
-from .filters import WriteFilter
+from .filters import TitleFilter
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all().order_by('id')
-    serializer_class = CategorySerializer
-    lookup_field = 'slug'
-    permission_classes = [IsAdminOrReadOnly]
+class BaseViewSet(viewsets.GenericViewSet):
+    permission_classes = [IsAdmin]
     http_method_names = ['get', 'post', 'delete', 'head', 'options']
-
-    def filter_queryset(self, queryset):
-        queryset = super().filter_queryset(queryset)
-        search = self.request.query_params.get('search')
-        if search:
-            queryset = queryset.filter(name__icontains=search)
-        return queryset
-
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    search_fields = ('name',)
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsReadOnly()]
-        return [IsAdminOrReadOnly()]
+        return [IsAdmin()]
 
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-
-class GenreViewSet(viewsets.ModelViewSet):
-    queryset = Genre.objects.all().order_by('id')
-    serializer_class = GenreSerializer
-    lookup_field = 'slug'
-    permission_classes = [IsAdminOrReadOnly]
-    http_method_names = ['get', 'post', 'delete', 'head', 'options']
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search = self.request.query_params.get('search')
-        if search:
-            queryset = queryset.filter(name__icontains=search).distinct()
-        return queryset
-
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAdminOrReadOnly()]
-        return super(GenreViewSet, self).get_permissions()
+    def retrieve(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -83,19 +52,28 @@ class GenreViewSet(viewsets.ModelViewSet):
     def perform_destroy(self, instance):
         instance.delete()
 
-    def retrieve(self, request, *args, **kwargs):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+class CategoryViewSet(BaseViewSet, viewsets.ModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    lookup_field = 'slug'
+
+
+class GenreViewSet(BaseViewSet, viewsets.ModelViewSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().order_by('id')
+    queryset = Title.objects.all()
     filter_backends = [DjangoFilterBackend]
-    filterset_class = WriteFilter
+    filterset_class = TitleFilter
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [IsReadOnly()]
-        return [IsAdminOrReadOnly()]
+        return [IsAdmin()]
 
     def get_serializer_class(self):
         if self.action in ['list', 'retrieve']:
@@ -121,7 +99,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'patch', 'delete']
     lookup_field = 'username'
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
-    search_fields = ('username', 'email', )
+    search_fields = ('username', 'email',)
     pagination_class = PageNumberPagination
 
     @action(detail=False,
@@ -155,7 +133,7 @@ class RegisterView(views.APIView):
         send_mail(
             subject='Успешное создание кода',
             message=f'Код создан, ваш код - {confirmation_code}',
-            from_email='api@yamdb.ru',
+            from_email=settings.DEFAULT_FROM_EMAIL,  # Переносим в settings.py
             recipient_list=[user.email, ],
             fail_silently=True
         )
@@ -165,7 +143,7 @@ class RegisterView(views.APIView):
 class TokenView(views.APIView):
     permission_classes = (permissions.AllowAny,)
 
-    def post(self, request, *args, **kwagrs):
+    def post(self, request, *args, **kwargs):
         serializer = TokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data.get('username')

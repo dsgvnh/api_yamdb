@@ -11,6 +11,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
+DEFAULT_FROM_EMAIL = 'noreply@yourdomain.com'
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

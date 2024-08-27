@@ -50,11 +50,11 @@ class CustomUser(AbstractUser):
 
     @property
     def is_moderator(self):
-        return self.role.lower() == 'moderator'
+        return self.role == CustomUser.Roles.MODER
 
     @property
     def is_admin(self):
-        return (self.role.lower() == 'admin' or self.is_superuser
+        return (self.role == CustomUser.Roles.ADMIN or self.is_superuser
                 or self.is_staff)
 
     def __str__(self):

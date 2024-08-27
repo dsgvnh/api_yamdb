@@ -12,10 +12,15 @@ from reviews.models import (
     Category, Genre, Title, CustomUser, Review, Comment
 )
 
+# Constants
+MAX_USERNAME_LENGTH = 150
+MAX_EMAIL_LENGTH = 254
+MIN_USERNAME_LENGTH = 3
+FORBIDDEN_USERNAMES = ['me', 'admin', 'superuser']
 
 class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',
@@ -30,13 +35,18 @@ class TokenSerializer(serializers.Serializer):
     )
     confirmation_code = serializers.CharField(required=True)
 
+    def validate_username(self, value):
+        if value.lower() in FORBIDDEN_USERNAMES:
+            raise serializers.ValidationError("Этот username запрещен.")
+        return value
+
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         validators=[
             RegexValidator(
-                regex=r'^[\w.@+-]+\Z',  # Паттерн для проверки username
+                regex=r'^[\w.@+-]+\Z',
                 message=(
                     'Username должен содержать только буквы, '
                     'цифры и символы: @ . + -'
@@ -46,15 +56,15 @@ class UserSerializer(serializers.ModelSerializer):
         ]
     )
     email = serializers.EmailField(
-        max_length=254,
+        max_length=MAX_EMAIL_LENGTH,
         validators=[UniqueValidator(queryset=CustomUser.objects.all())]
     )
     first_name = serializers.CharField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         required=False
     )
     last_name = serializers.CharField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         required=False
     )
 
@@ -82,12 +92,11 @@ class RegisterSerializer(serializers.Serializer):
         regex=r'^[\w.@+-]+\Z',
         message="Неверный формат Username",
     )
-    username = serializers.CharField(validators=[username_validator,
-                                                 MinLengthValidator(3),
-                                                 MaxLengthValidator(150)],
-                                     required=True,
-                                     )
-    email = serializers.EmailField(max_length=254, required=True)
+    username = serializers.CharField(
+        validators=[username_validator, MinLengthValidator(MIN_USERNAME_LENGTH), MaxLengthValidator(MAX_USERNAME_LENGTH)],
+        required=True,
+    )
+    email = serializers.EmailField(max_length=MAX_EMAIL_LENGTH, required=True)
 
     def validate(self, data):
         username = data.get('username')
@@ -116,28 +125,27 @@ class RegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
         email = validated_data.get('email')
         username = validated_data.get('username')
-        user, created = CustomUser.objects.get_or_create(email=email,
-                                                         username=username)
+        user, created = CustomUser.objects.get_or_create(email=email, username=username)
         return user
 
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ['name', 'slug']
+        fields = ('name', 'slug')
 
 
 class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
-        fields = ['name', 'slug']
+        fields = ('name', 'slug')
 
 
 class TitlePostSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Category.objects.all())
+        slug_field='slug', queryset=Category.objects.all(), required=True)
     genre = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Genre.objects.all(), many=True)
+        slug_field='slug', queryset=Genre.objects.all(), many=True, required=True)
 
     class Meta:
         model = Title

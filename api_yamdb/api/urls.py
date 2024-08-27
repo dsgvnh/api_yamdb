@@ -1,8 +1,13 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-from .views import (CategoryViewSet, GenreViewSet, TitleViewSet,
-                    UsersViewSet, RegisterView, TokenView,
-                    CommentViewSet, ReviewViewSet)
+from django.urls import include, path  # Импорты из библиотеки Django
+
+from rest_framework.routers import DefaultRouter  # Импорты сторонних библиотек
+
+from .views import (  # Импорты модулей текущего проекта
+    CategoryViewSet, GenreViewSet, TitleViewSet,
+    UsersViewSet, RegisterView, TokenView,
+    CommentViewSet, ReviewViewSet
+)
+
 
 
 router_v1 = DefaultRouter()

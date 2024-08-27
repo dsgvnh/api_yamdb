@@ -1,13 +1,3 @@
-# Role constants
-USER_ROLE = 'user'
-MODERATOR_ROLE = 'moderator'
-ADMIN_ROLE = 'admin'
-
-ROLES = [
-    (USER_ROLE, 'User'),
-    (MODERATOR_ROLE, 'Moderator'),
-    (ADMIN_ROLE, 'Admin'),
-]
 
 # Magic numbers
 USERNAME_MAX_LENGTH = 150
@@ -16,3 +6,10 @@ ROLE_MAX_LENGTH = 10
 BIO_MAX_LENGTH = 250
 CONFIRMATION_CODE_MAX_LENGTH = 500
 YEAR_MAX_LENGTH = 4
+CATEGORY_NAME = 256
+CATEGORY_SLUG = 50
+GENRE_NAME = 256
+GENRE_SLUG = 50
+TITLE_NAME = 256
+MIN_USERNAME_LENGTH = 2
+FORBIDDEN_USERNAMES = ['me', 'admin', 'superuser']

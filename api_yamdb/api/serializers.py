@@ -12,15 +12,13 @@ from reviews.models import (
     Category, Genre, Title, CustomUser, Review, Comment
 )
 
-# Constants
-MAX_USERNAME_LENGTH = 150
-MAX_EMAIL_LENGTH = 254
-MIN_USERNAME_LENGTH = 3
-FORBIDDEN_USERNAMES = ['me', 'admin', 'superuser']
+from .constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
+                        MIN_USERNAME_LENGTH, FORBIDDEN_USERNAMES)
+
 
 class TokenSerializer(serializers.Serializer):
     username = serializers.CharField(
-        max_length=MAX_USERNAME_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',
@@ -43,7 +41,7 @@ class TokenSerializer(serializers.Serializer):
 
 class UserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
-        max_length=MAX_USERNAME_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         validators=[
             RegexValidator(
                 regex=r'^[\w.@+-]+\Z',
@@ -56,15 +54,15 @@ class UserSerializer(serializers.ModelSerializer):
         ]
     )
     email = serializers.EmailField(
-        max_length=MAX_EMAIL_LENGTH,
+        max_length=EMAIL_MAX_LENGTH,
         validators=[UniqueValidator(queryset=CustomUser.objects.all())]
     )
     first_name = serializers.CharField(
-        max_length=MAX_USERNAME_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         required=False
     )
     last_name = serializers.CharField(
-        max_length=MAX_USERNAME_LENGTH,
+        max_length=USERNAME_MAX_LENGTH,
         required=False
     )
 
@@ -93,10 +91,12 @@ class RegisterSerializer(serializers.Serializer):
         message="Неверный формат Username",
     )
     username = serializers.CharField(
-        validators=[username_validator, MinLengthValidator(MIN_USERNAME_LENGTH), MaxLengthValidator(MAX_USERNAME_LENGTH)],
+        validators=[username_validator,
+                    MinLengthValidator(MIN_USERNAME_LENGTH),
+                    MaxLengthValidator(USERNAME_MAX_LENGTH)],
         required=True,
     )
-    email = serializers.EmailField(max_length=MAX_EMAIL_LENGTH, required=True)
+    email = serializers.EmailField(max_length=EMAIL_MAX_LENGTH, required=True)
 
     def validate(self, data):
         username = data.get('username')
@@ -116,7 +116,8 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {'email': 'Такая почта уже занята'})
 
-        if CustomUser.objects.filter(username=username).exists():
+        if (CustomUser.objects.filter(username=username).exists()
+                or username == 'me'):
             raise serializers.ValidationError(
                 {'username': 'Такое имя уже занято'})
 
@@ -125,7 +126,8 @@ class RegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
         email = validated_data.get('email')
         username = validated_data.get('username')
-        user, created = CustomUser.objects.get_or_create(email=email, username=username)
+        user, created = CustomUser.objects.get_or_create(email=email,
+                                                         username=username)
         return user
 
 
@@ -145,7 +147,8 @@ class TitlePostSerializer(serializers.ModelSerializer):
     category = serializers.SlugRelatedField(
         slug_field='slug', queryset=Category.objects.all(), required=True)
     genre = serializers.SlugRelatedField(
-        slug_field='slug', queryset=Genre.objects.all(), many=True, required=True)
+        slug_field='slug', queryset=Genre.objects.all(), many=True,
+        required=True)
 
     class Meta:
         model = Title

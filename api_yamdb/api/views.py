@@ -31,15 +31,15 @@ from .filters import TitleFilter
 
 
 class BaseViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAdmin]
-    http_method_names = ['get', 'post', 'delete', 'head', 'options']
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    permission_classes = (IsAdmin)
+    http_method_names = ('get', 'post', 'delete', 'head', 'options')
+    filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [IsReadOnly()]
-        return [IsAdmin()]
+        if self.action in ('list', 'retrieve'):
+            return (IsReadOnly(), )
+        return (IsAdmin(), )
 
     def retrieve(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
@@ -67,11 +67,11 @@ class GenreViewSet(BaseViewSet, viewsets.ModelViewSet):
 
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.all()
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ('list', 'retrieve'):
             return [IsReadOnly()]
         return [IsAdmin()]
 
@@ -109,7 +109,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(request.user,
                                     data=request.data,
                                     partial=True)
-        if request.user.role == 'admin' or request.user.role == 'moderator':
+        if request.user.is_admin or request.user.is_moderator:
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -125,10 +125,9 @@ class RegisterView(views.APIView):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
-        user = CustomUser.objects.get(
-            username=serializer.validated_data['username'])
+        user = get_object_or_404(
+            CustomUser, username=serializer.validated_data['username'])
         confirmation_code = default_token_generator.make_token(user)
-        user.confirmation_code = confirmation_code
         user.save()
         send_mail(
             subject='Успешное создание кода',

@@ -1,0 +1,18 @@
+# Role constants
+USER_ROLE = 'user'
+MODERATOR_ROLE = 'moderator'
+ADMIN_ROLE = 'admin'
+
+ROLES = [
+    (USER_ROLE, 'User'),
+    (MODERATOR_ROLE, 'Moderator'),
+    (ADMIN_ROLE, 'Admin'),
+]
+
+# Magic numbers
+USERNAME_MAX_LENGTH = 150
+EMAIL_MAX_LENGTH = 254
+ROLE_MAX_LENGTH = 10
+BIO_MAX_LENGTH = 250
+CONFIRMATION_CODE_MAX_LENGTH = 500
+YEAR_MAX_LENGTH = 4

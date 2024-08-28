@@ -9,7 +9,8 @@ from django.db.models import Avg
 from api.constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
                            BIO_MAX_LENGTH, CONFIRMATION_CODE_MAX_LENGTH,
                            CATEGORY_NAME, CATEGORY_SLUG, GENRE_NAME,
-                           GENRE_SLUG, TITLE_NAME)
+                           GENRE_SLUG, TITLE_NAME, SCORE_MAX_VALUE_VALIDATOR,
+                           SCORE_MIN_VALUE_VALIDATOR, TEXT_SYMBOL_SLICE)
 
 
 class CustomUser(AbstractUser):
@@ -116,8 +117,9 @@ class Review(models.Model):
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name='reviews',
         verbose_name='Автор')
-    score = models.PositiveIntegerField(
-        validators=[MinValueValidator(0), MaxValueValidator(10)],
+    score = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(SCORE_MIN_VALUE_VALIDATOR),
+                    MaxValueValidator(SCORE_MAX_VALUE_VALIDATOR)],
         verbose_name='Оценка')
     pub_date = models.DateTimeField(
         'Дата добавления', auto_now_add=True, db_index=True)
@@ -149,4 +151,4 @@ class Comment(models.Model):
         verbose_name_plural = 'Комментарии'
 
     def __str__(self):
-        return self.text[:20]
+        return self.text[:TEXT_SYMBOL_SLICE]

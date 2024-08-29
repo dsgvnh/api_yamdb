@@ -5,7 +5,6 @@ from django.core.validators import (
 
 # Third-party imports
 from rest_framework import serializers
-from rest_framework.validators import UniqueValidator
 
 # Local application imports
 from reviews.models import (
@@ -13,7 +12,8 @@ from reviews.models import (
 )
 
 from .constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
-                        MIN_USERNAME_LENGTH, FORBIDDEN_USERNAMES)
+                        MIN_USERNAME_LENGTH, FORBIDDEN_USERNAMES,
+                        BIO_MAX_LENGTH)
 
 
 class TokenSerializer(serializers.Serializer):
@@ -51,20 +51,21 @@ class UserSerializer(serializers.ModelSerializer):
                 ),
                 code='invalid_username'
             )
-        ]
+        ], required=True
     )
     email = serializers.EmailField(
-        max_length=EMAIL_MAX_LENGTH,
-        validators=[UniqueValidator(queryset=CustomUser.objects.all())]
+        max_length=EMAIL_MAX_LENGTH, required=True
     )
     first_name = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH,
-        required=False
+        max_length=USERNAME_MAX_LENGTH, required=False
     )
     last_name = serializers.CharField(
-        max_length=USERNAME_MAX_LENGTH,
-        required=False
+        max_length=USERNAME_MAX_LENGTH, required=False
     )
+    bio = serializers.CharField(
+        max_length=BIO_MAX_LENGTH, required=False
+    )
+    role = serializers.CharField(max_length=10, required=False)
 
     class Meta:
         model = CustomUser

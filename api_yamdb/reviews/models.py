@@ -34,9 +34,10 @@ class CustomUser(AbstractUser):
     last_name = models.CharField('Фамилия', max_length=USERNAME_MAX_LENGTH,
                                  blank=True,)
     bio = models.TextField('Биография', max_length=BIO_MAX_LENGTH, blank=True)
-    role = models.CharField('Роль', max_length=max(Roles.choices),
-                            choices=Roles.choices,
-                            default='user')
+    role = models.CharField(
+        'Роль', max_length=max(len(role) for role, _ in Roles.choices),
+        choices=Roles.choices,
+        default='user')
     confirmation_code = models.CharField(
         'Код',
         max_length=CONFIRMATION_CODE_MAX_LENGTH,

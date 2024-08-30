@@ -5,6 +5,7 @@ from django.core.validators import (
 
 # Third-party imports
 from rest_framework import serializers
+from datetime import datetime
 
 # Local application imports
 from reviews.models import (
@@ -148,6 +149,16 @@ class TitlePostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Title
         fields = '__all__'
+
+    def validate_year(self, value):
+        if value > datetime.now().year:
+            raise serializers.ValidationError("Year cannot be in the future.")
+        return value
+
+    def validate_genre(self, value):
+        if not value:
+            raise serializers.ValidationError("Genre field cannot be empty.")
+        return value
 
     def to_representation(self, instance):
         return TitleGetSerializer(instance).data

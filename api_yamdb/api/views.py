@@ -31,7 +31,7 @@ from .filters import TitleFilter
 
 
 class BaseViewSet(viewsets.GenericViewSet):
-    permission_classes = (IsAdmin)
+    permission_classes = (IsAdmin,)
     http_method_names = ('get', 'post', 'delete', 'head', 'options')
     filter_backends = (DjangoFilterBackend, filters.SearchFilter)
     search_fields = ('name',)
@@ -54,19 +54,19 @@ class BaseViewSet(viewsets.GenericViewSet):
 
 
 class CategoryViewSet(BaseViewSet, viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
 
 
 class GenreViewSet(BaseViewSet, viewsets.ModelViewSet):
-    queryset = Genre.objects.all()
+    queryset = Genre.objects.all().order_by('id')
     serializer_class = GenreSerializer
     lookup_field = 'slug'
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all()
+    queryset = Title.objects.all().order_by('id')
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]

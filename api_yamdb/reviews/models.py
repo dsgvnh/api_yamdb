@@ -96,6 +96,7 @@ class Genre(models.Model):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
+
 def validate_year(value):
     current_year = timezone.now().year
     if value > current_year:
@@ -122,10 +123,6 @@ class Title(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, related_name='titles',
         verbose_name='Категория')
-
-    @property
-    def rating(self):
-        return self.reviews.aggregate(avg_score=Avg('score'))['avg_score']
 
     def __str__(self):
         return self.name

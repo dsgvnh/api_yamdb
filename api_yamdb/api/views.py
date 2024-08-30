@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
+from django.db.models import Avg
 
 # Third-party
 from django_filters.rest_framework import DjangoFilterBackend
@@ -66,8 +67,10 @@ class GenreViewSet(mixins.ListModelMixin,
     def retrieve(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+
 class TitleViewSet(viewsets.ModelViewSet):
-    queryset = Title.objects.all().order_by('id')
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')).all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -166,15 +169,18 @@ class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
     permission_classes = (AdminModeratorAuthor,)
 
+    def get_title(self):
+        return get_object_or_404(Title,
+                                 pk=self.kwargs.get('title_id'))
+
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            title=get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+            title=self.get_title()
         )
 
     def get_queryset(self):
-        return get_object_or_404(Title,
-                                 pk=self.kwargs.get('title_id')).reviews.all()
+        return self.get_title().reviews.all()
 
 
 class CommentViewSet(viewsets.ModelViewSet):
@@ -183,12 +189,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = (AdminModeratorAuthor,)
 
+    def get_review(self):
+        return get_object_or_404(
+            Review, pk=self.kwargs.get('review_id'),
+            title__id=self.kwargs.get('title_id'))
+
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
-            review=get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+            review=self.get_review(),
         )
 
     def get_queryset(self):
-        return get_object_or_404(
-            Review, pk=self.kwargs.get('review_id')).comments.all()
+        return self.get_review().comments.all()

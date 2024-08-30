@@ -49,9 +49,6 @@ class BaseViewSet(viewsets.GenericViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    def perform_destroy(self, instance):
-        instance.delete()
-
 
 class CategoryViewSet(BaseViewSet, viewsets.ModelViewSet):
     queryset = Category.objects.all()
@@ -106,15 +103,18 @@ class UsersViewSet(viewsets.ModelViewSet):
             methods=['GET', 'PATCH'],
             permission_classes=[permissions.IsAuthenticated, ])
     def me(self, request):
-        serializer = UserSerializer(request.user,
-                                    data=request.data,
-                                    partial=True)
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        elif request.method == 'PATCH':
+            serializer = UserSerializer(request.user, data=request.data,
+                                        partial=True)
         if request.user.is_admin or request.user.is_moderator:
             serializer.is_valid(raise_exception=True)
             serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(role='user')
+        else:
+            serializer.is_valid(raise_exception=True)
+            serializer.save(role=request.user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -128,7 +128,6 @@ class RegisterView(views.APIView):
         user = get_object_or_404(
             CustomUser, username=serializer.validated_data['username'])
         confirmation_code = default_token_generator.make_token(user)
-        user.save()
         send_mail(
             subject='Успешное создание кода',
             message=f'Код создан, ваш код - {confirmation_code}',

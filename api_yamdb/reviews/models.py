@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import (
     RegexValidator, MaxValueValidator, MinValueValidator
 )
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Avg
 
@@ -21,7 +22,7 @@ class CustomUser(AbstractUser):
 
     username_validator = RegexValidator(
         regex=r'^[\w.@+-]+\Z',
-        message="Неверный формат Username",
+        message='Неверный формат Username',
     )
     username = models.CharField('Юзернейм', max_length=USERNAME_MAX_LENGTH,
                                 unique=True,
@@ -58,6 +59,11 @@ class CustomUser(AbstractUser):
     def is_admin(self):
         return (self.role == CustomUser.Roles.ADMIN or self.is_superuser
                 or self.is_staff)
+
+    def clean(self):
+        super().clean()
+        if self.username == 'me':
+            raise ValidationError('Такое имя запрещено')
 
     def __str__(self):
         return self.username

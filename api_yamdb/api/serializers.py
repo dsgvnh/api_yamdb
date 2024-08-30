@@ -12,8 +12,7 @@ from reviews.models import (
 )
 
 from .constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
-                        MIN_USERNAME_LENGTH, FORBIDDEN_USERNAMES,
-                        BIO_MAX_LENGTH)
+                        MIN_USERNAME_LENGTH, BIO_MAX_LENGTH)
 
 
 class TokenSerializer(serializers.Serializer):
@@ -32,11 +31,6 @@ class TokenSerializer(serializers.Serializer):
         required=True,
     )
     confirmation_code = serializers.CharField(required=True)
-
-    def validate_username(self, value):
-        if value.lower() in FORBIDDEN_USERNAMES:
-            raise serializers.ValidationError("Этот username запрещен.")
-        return value
 
 
 class UserSerializer(serializers.ModelSerializer):

@@ -2,6 +2,7 @@
 from django.core.validators import (
     RegexValidator, MaxLengthValidator, MinLengthValidator
 )
+from django.db.models import Avg
 
 # Third-party imports
 from rest_framework import serializers
@@ -159,13 +160,16 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
-    rating = serializers.FloatField(read_only=True)
+    rating = serializers.SerializerMethodField()
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
 
     class Meta:
         model = Title
         fields = '__all__'
+
+    def get_rating(self, obj):
+        return obj.reviews.aggregate(avg_score=Avg('score'))['avg_score']
 
 
 class ReviewSerializer(serializers.ModelSerializer):

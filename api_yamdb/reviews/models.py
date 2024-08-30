@@ -5,6 +5,8 @@ from django.core.validators import (
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Avg
+from django.utils import timezone
+
 
 # Импортируем константы
 from api.constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
@@ -94,10 +96,27 @@ class Genre(models.Model):
         verbose_name = 'Жанр'
         verbose_name_plural = 'Жанры'
 
+def validate_year(value):
+    current_year = timezone.now().year
+    if value > current_year:
+        raise ValidationError(
+            f'Год не может быть больше текущего {current_year}'
+        )
+
+
+def validate_year(value):
+    current_year = timezone.now().year
+    if value > current_year:
+        raise ValidationError(f'Год не может быть больше текущего {current_year}')
+
 
 class Title(models.Model):
     name = models.CharField(max_length=TITLE_NAME, verbose_name='Название')
-    year = models.SmallIntegerField(verbose_name='Год', db_index=True)
+    year = models.SmallIntegerField(
+        verbose_name='Год',
+        db_index=True,
+        validators=[validate_year]
+    )
     description = models.TextField(verbose_name='Описание')
     genre = models.ManyToManyField(Genre, verbose_name='Жанр')
     category = models.ForeignKey(

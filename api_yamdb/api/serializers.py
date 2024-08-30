@@ -65,7 +65,6 @@ class UserSerializer(serializers.ModelSerializer):
     bio = serializers.CharField(
         max_length=BIO_MAX_LENGTH, required=False
     )
-    role = serializers.CharField(max_length=10, required=False)
 
     class Meta:
         model = CustomUser
@@ -102,26 +101,21 @@ class RegisterSerializer(serializers.Serializer):
     def validate(self, data):
         username = data.get('username')
         email = data.get('email')
-
         if CustomUser.objects.filter(email=email, username=username).exists():
             return data
-
         if (CustomUser.objects.filter(email=email).exists()
                 and CustomUser.objects.filter(username=username).exists()):
             raise serializers.ValidationError({
                 'email': 'Такая почта уже занята',
                 'username': 'Такое имя уже занято'
             })
-
         if CustomUser.objects.filter(email=email).exists():
             raise serializers.ValidationError(
                 {'email': 'Такая почта уже занята'})
-
         if (CustomUser.objects.filter(username=username).exists()
                 or username == 'me'):
             raise serializers.ValidationError(
                 {'username': 'Такое имя уже занято'})
-
         return data
 
     def create(self, validated_data):

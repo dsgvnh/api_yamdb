@@ -1,38 +1,12 @@
 from django.contrib import admin
-
-from .models import Review, Comment, Genre, Category, Title
-
-
-class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('author', 'pub_date', 'title', 'text', 'score')
-    search_fields = ('author',)
-    list_filter = ('pub_date',)
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin
 
 
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ('author', 'text', 'review', 'pub_date')
-    search_fields = ('author',)
-    list_filter = ('pub_date',)
+class CustomUserAdmin(UserAdmin):
+    list_display = ('username', 'email', 'first_name', 'last_name', 'role')
+    search_fields = ('username', 'email', 'first_name', 'last_name')
+    list_filter = ('is_staff', 'is_active')
 
 
-class GenreAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug')
-    search_fields = ('slug',)
-
-
-class CategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug')
-    search_fields = ('slug',)
-
-
-class TitleAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'category', 'year')
-    search_fields = ('name',)
-    list_filter = ('year', )
-
-
-admin.site.register(Review, ReviewAdmin)
-admin.site.register(Comment, CommentAdmin)
-admin.site.register(Genre, GenreAdmin)
-admin.site.register(Category, CategoryAdmin)
-admin.site.register(Title, TitleAdmin)
+admin.site.register(User, CustomUserAdmin)

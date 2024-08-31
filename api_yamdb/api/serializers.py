@@ -14,7 +14,8 @@ from reviews.models import (
 )
 
 from .constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
-                        MIN_USERNAME_LENGTH, BIO_MAX_LENGTH)
+                        MIN_USERNAME_LENGTH, BIO_MAX_LENGTH,
+                        FORBIDDEN_USERNAMES)
 
 
 class TokenSerializer(serializers.Serializer):
@@ -33,6 +34,11 @@ class TokenSerializer(serializers.Serializer):
         required=True,
     )
     confirmation_code = serializers.CharField(required=True)
+
+    def validate_username(self, value): 
+        if value.lower() in FORBIDDEN_USERNAMES:
+            raise serializers.ValidationError("Этот username запрещен.") 
+        return value
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -61,6 +67,7 @@ class UserSerializer(serializers.ModelSerializer):
     bio = serializers.CharField(
         max_length=BIO_MAX_LENGTH, required=False
     )
+    role = serializers.ChoiceField(CustomUser.Roles.choices, required=False)
 
     class Meta:
         model = CustomUser
@@ -74,10 +81,10 @@ class UserSerializer(serializers.ModelSerializer):
         known_email = CustomUser.objects.filter(email=email)
         if known_username.exists():
             if (known_username.first().email != email):
-                raise serializers.ValidationError()
+                raise serializers.ValidationError('1-st')
         if known_email.exists():
             if (known_email.first().username != username):
-                raise serializers.ValidationError()
+                raise serializers.ValidationError('2-nd')
         return data
 
 
@@ -192,10 +199,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    review = serializers.SlugRelatedField(
-        slug_field='text',
-        read_only=True
-    )
     author = serializers.SlugRelatedField(
         slug_field='username',
         read_only=True,

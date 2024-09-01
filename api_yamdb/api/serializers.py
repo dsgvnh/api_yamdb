@@ -2,7 +2,6 @@
 from django.core.validators import (
     RegexValidator, MaxLengthValidator, MinLengthValidator
 )
-from django.db.models import Avg
 
 # Third-party imports
 from rest_framework import serializers
@@ -35,9 +34,9 @@ class TokenSerializer(serializers.Serializer):
     )
     confirmation_code = serializers.CharField(required=True)
 
-    def validate_username(self, value): 
+    def validate_username(self, value):
         if value.lower() in FORBIDDEN_USERNAMES:
-            raise serializers.ValidationError("Этот username запрещен.") 
+            raise serializers.ValidationError("Этот username запрещен.")
         return value
 
 

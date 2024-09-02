@@ -2,7 +2,6 @@
 from django.core.validators import (
     RegexValidator, MaxLengthValidator, MinLengthValidator
 )
-from django.db.models import Avg
 
 # Third-party imports
 from rest_framework import serializers
@@ -35,9 +34,9 @@ class TokenSerializer(serializers.Serializer):
     )
     confirmation_code = serializers.CharField(required=True)
 
-    def validate_username(self, value): 
+    def validate_username(self, value):
         if value.lower() in FORBIDDEN_USERNAMES:
-            raise serializers.ValidationError("Этот username запрещен.") 
+            raise serializers.ValidationError("Этот username запрещен.")
         return value
 
 
@@ -77,14 +76,20 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         email = data.get('email')
         username = data.get('username')
-        known_username = CustomUser.objects.filter(username=username)
-        known_email = CustomUser.objects.filter(email=email)
-        if known_username.exists():
-            if (known_username.first().email != email):
-                raise serializers.ValidationError('1-st')
-        if known_email.exists():
-            if (known_email.first().username != username):
-                raise serializers.ValidationError('2-nd')
+        try:
+            known_user = CustomUser.objects.get(username=username)
+            if known_user.email != email:
+                raise serializers.ValidationError({'email': 'email не найден'})
+        except CustomUser.DoesNotExist:
+            pass
+        try:
+            known_user = CustomUser.objects.get(email=email)
+            if known_user.username != username:
+                raise serializers.ValidationError(
+                    {'username': 'username не найден'}
+                )
+        except CustomUser.DoesNotExist:
+            pass
         return data
 
 
@@ -154,12 +159,12 @@ class TitlePostSerializer(serializers.ModelSerializer):
 
     def validate_year(self, value):
         if value > datetime.now().year:
-            raise serializers.ValidationError("Year cannot be in the future.")
+            raise serializers.ValidationError('Year cannot be in the future.')
         return value
 
     def validate_genre(self, value):
         if not value:
-            raise serializers.ValidationError("Genre field cannot be empty.")
+            raise serializers.ValidationError('Genre field cannot be empty.')
         return value
 
     def to_representation(self, instance):

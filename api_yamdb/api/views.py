@@ -48,7 +48,7 @@ class CategoryViewSet(mixins.ListModelMixin,
                       mixins.CreateModelMixin,
                       mixins.DestroyModelMixin,
                       BaseViewSet):
-    queryset = Category.objects.all().order_by('id')
+    queryset = Category.objects.order_by('id')
     serializer_class = CategorySerializer
     lookup_field = 'slug'
 
@@ -136,6 +136,8 @@ class RegisterView(views.APIView):
         user = get_object_or_404(
             CustomUser, username=serializer.validated_data['username'])
         confirmation_code = default_token_generator.make_token(user)
+        user.confirmation_code = confirmation_code
+        user.save()
         send_mail(
             subject='Успешное создание кода',
             message=f'Код создан, ваш код - {confirmation_code}',

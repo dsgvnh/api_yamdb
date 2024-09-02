@@ -105,12 +105,6 @@ def validate_year(value):
         )
 
 
-def validate_year(value):
-    current_year = timezone.now().year
-    if value > current_year:
-        raise ValidationError(f'Год не может быть больше текущего {current_year}')
-
-
 class Title(models.Model):
     name = models.CharField(max_length=TITLE_NAME, verbose_name='Название')
     year = models.SmallIntegerField(

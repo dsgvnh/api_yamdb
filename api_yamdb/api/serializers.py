@@ -168,11 +168,15 @@ class TitlePostSerializer(serializers.ModelSerializer):
         return value
 
     def to_representation(self, instance):
-        return TitleGetSerializer(instance).data
+        ret = super().to_representation(instance)
+        ret['category'] = CategorySerializer(instance.category).data
+        ret['genre'] = GenreSerializer(instance.genre.all(), many=True).data
+        ret['rating'] = instance.rating
+        return ret
 
 
 class TitleGetSerializer(serializers.ModelSerializer):
-    rating = serializers.IntegerField(read_only=True)
+    rating = serializers.FloatField(read_only=True)
     category = CategorySerializer(read_only=True)
     genre = GenreSerializer(many=True, read_only=True)
 

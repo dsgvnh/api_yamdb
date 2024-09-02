@@ -5,7 +5,7 @@ from django.core.validators import (
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
-
+from django.db.models import Avg
 
 # Импортируем константы
 from api.constants import (USERNAME_MAX_LENGTH, EMAIL_MAX_LENGTH,
@@ -111,11 +111,15 @@ class Title(models.Model):
         db_index=True,
         validators=[validate_year]
     )
-    description = models.TextField(verbose_name='Описание')
+    description = models.TextField(verbose_name='Описание', default='No description provided')
     genre = models.ManyToManyField(Genre, verbose_name='Жанр')
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, related_name='titles',
         verbose_name='Категория')
+
+    @property
+    def rating(self):
+        return self.reviews.aggregate(Avg('score'))['score__avg']
 
     def __str__(self):
         return self.name

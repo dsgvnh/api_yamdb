@@ -76,20 +76,19 @@ class UserSerializer(serializers.ModelSerializer):
     def validate(self, data):
         email = data.get('email')
         username = data.get('username')
-        try:
-            known_user = CustomUser.objects.get(username=username)
-            if known_user.email != email:
-                raise serializers.ValidationError({'email': 'email не найден'})
-        except CustomUser.DoesNotExist:
-            pass
-        try:
-            known_user = CustomUser.objects.get(email=email)
-            if known_user.username != username:
+        if username in FORBIDDEN_USERNAMES:
+            raise serializers.ValidationError(
+                {'username': 'Запрещенное имя'})
+        known_username = CustomUser.objects.filter(username=username).first()
+        known_email = CustomUser.objects.filter(email=email).first()
+        if known_username:
+            if (known_username.email != email):
                 raise serializers.ValidationError(
-                    {'username': 'username не найден'}
-                )
-        except CustomUser.DoesNotExist:
-            pass
+                    {'mail': 'Несуществующая почта'})
+        if known_email:
+            if (known_email.username != username):
+                raise serializers.ValidationError(
+                    {'username': 'Несуществующее имя'})
         return data
 
 

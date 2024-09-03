@@ -111,7 +111,8 @@ class Title(models.Model):
         db_index=True,
         validators=[validate_year]
     )
-    description = models.TextField(verbose_name='Описание', default='No description provided')
+    description = models.TextField(verbose_name='Описание',
+                                   default='No description provided')
     genre = models.ManyToManyField(Genre, verbose_name='Жанр')
     category = models.ForeignKey(
         Category, on_delete=models.SET_NULL, null=True, related_name='titles',

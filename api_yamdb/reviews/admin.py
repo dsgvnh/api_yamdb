@@ -14,29 +14,29 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ('is_staff', 'is_active')
 
 
-class ReviewAdmin(UserAdmin):
+class ReviewAdmin(admin.ModelAdmin):
     list_display = ('author', 'pub_date', 'title', 'text', 'score')
     search_fields = ('author',)
     list_filter = ('pub_date',)
 
 
-class CommentAdmin(UserAdmin):
+class CommentAdmin(admin.ModelAdmin):
     list_display = ('author', 'text', 'review', 'pub_date')
     search_fields = ('author',)
     list_filter = ('pub_date',)
 
 
-class GenreAdmin(UserAdmin):
+class GenreAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     search_fields = ('slug',)
 
 
-class CategoryAdmin(UserAdmin):
+class CategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'slug')
     search_fields = ('slug',)
 
 
-class TitleAdmin(UserAdmin):
+class TitleAdmin(admin.ModelAdmin):
     list_display = ('name', 'description', 'category', 'year')
     search_fields = ('name',)
     list_filter = ('year', )
